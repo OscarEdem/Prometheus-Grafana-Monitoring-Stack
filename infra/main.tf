@@ -53,26 +53,36 @@ resource "google_compute_instance" "monitoring_vm" {
     exec > >(tee -a /var/log/monitoring-startup.log) 2>&1
     echo "[INFO] Starting Automated Monitoring Stack Deployment at $(date)..."
 
-    # 1. Update & install standard Ubuntu packages
+    # 1. Enable 2GB Swap File to expand 1GB RAM to 3GB Virtual Memory
+    if [ ! -f /swapfile ]; then
+      echo "[INFO] Creating 2GB Swap file for RAM optimization..."
+      fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+      chmod 600 /swapfile
+      mkswap /swapfile
+      swapon /swapfile
+      echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    fi
+
+    # 2. Update & install standard Ubuntu packages
     apt-get update -y
     apt-get install -y docker.io docker-compose git
 
-    # 2. Start & enable Docker service
+    # 3. Start & enable Docker service
     systemctl daemon-reload
     systemctl enable --now docker
 
-    # 3. Create app directory
+    # 4. Create app directory
     mkdir -p /opt/monitoring
     cd /opt/monitoring
 
-    # 4. Clone Monitoring Stack Repository
+    # 5. Clone Monitoring Stack Repository
     if [ ! -d "/opt/monitoring/.git" ]; then
       git clone ${var.repository_url} .
     else
       git pull origin main
     fi
 
-    # 5. Clean stale containers & spin up fresh Docker containers
+    # 6. Clean stale containers & spin up fresh Docker containers
     docker-compose down -v --remove-orphans || true
     docker-compose up -d
 
