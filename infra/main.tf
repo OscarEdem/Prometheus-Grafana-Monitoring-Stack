@@ -95,6 +95,10 @@ resource "google_compute_instance" "monitoring_vm" {
     echo "[SUCCESS] Prometheus & Grafana Monitoring Stack is up and running at $(date)!"
   EOF
 
+  lifecycle {
+    ignore_changes = [metadata_startup_script]
+  }
+
   scheduling {
     automatic_restart   = true
     on_host_maintenance = "MIGRATE"
