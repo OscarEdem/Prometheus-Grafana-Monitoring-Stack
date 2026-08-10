@@ -53,6 +53,12 @@ resource "google_compute_instance" "monitoring_vm" {
     exec > >(tee -a /var/log/monitoring-startup.log) 2>&1
     echo "[INFO] Starting Automated Monitoring Stack Deployment at $(date)..."
 
+    # Wait for cloud-init dpkg locks to release on initial boot
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+      echo "[INFO] Waiting for Ubuntu background package locks to release..."
+      sleep 3
+    done
+
     # 1. Enable 2GB Swap File to expand 1GB RAM to 3GB Virtual Memory
     if [ ! -f /swapfile ]; then
       echo "[INFO] Creating 2GB Swap file for RAM optimization..."
