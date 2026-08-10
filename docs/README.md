@@ -24,10 +24,12 @@ monitoring/
 ├── docker-compose.yml             # Main Docker Compose configuration
 ├── docker-compose.monitoring.yml  # Deployment configuration variant
 ├── prometheus.yml                 # Prometheus scrape configuration & jobs
+├── render.yaml                    # Render Cloud Blueprint specification
 └── docs/                          # Stack documentation
     ├── README.md                  # Stack overview
     ├── local-testing.md           # Local setup, testing & dashboard import guide
     ├── capacity-and-multi-project.md # Scaling & multi-project monitoring guide
+    ├── gcp-free-vm-deployment.md  # GCP Always Free VM ($0/mo) deployment guide
     ├── gcp-cloud-run-monitoring.md   # GCP Cloud Run integration guide
     └── render-deployment.md       # Render cloud hosting & container sandbox guide
 ```
@@ -36,6 +38,7 @@ monitoring/
 
 ## 📖 Documentation Index
 
+- 🟢 [GCP Always Free VM ($0/mo) Deployment Guide](./gcp-free-vm-deployment.md) - **Best option**: Deploy 24/7 with persistent storage for $0/month on GCP `e2-micro`.
 - 🧪 [Local Testing & Execution Guide](./local-testing.md) - How to test locally and import pre-built Grafana dashboards (`1860` & `14282`).
 - 📘 [Capacity & Multi-Project Monitoring Guide](./capacity-and-multi-project.md) - Learn how many projects/containers can be monitored and how to filter them.
 - ☁️ [GCP Cloud Run Monitoring Guide](./gcp-cloud-run-monitoring.md) - Learn how to integrate GCP Cloud Run serverless services with Grafana via GCP Service Accounts.
