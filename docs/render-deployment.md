@@ -1,73 +1,115 @@
-# Render Deployment & Cloud Hosting Guide                                                                             #*eddiere
+# Render Cloud Hosting & Deployment Guide                                                                              #*eddiere
 
-## ☁️ Can This Monitoring Stack Be Hosted on Render?
-
-**Short Answer**: **Grafana and Prometheus CAN be hosted on Render**, but with **critical architectural limitations regarding hardware/container exporters (`node_exporter` & `cadvisor`)**.
+This guide explains step-by-step how to deploy **Grafana** and **Prometheus** on **Render Cloud** using the included [`render.yaml`](../render.yaml) Blueprint file or manual Render setup.
 
 ---
 
-## 🛑 Understanding Render Sandbox Limitations
-
-### Why `node_exporter` & `cadvisor` CANNOT Monitor Render's Underlying Host
-Render runs all services inside isolated, managed container sandboxes (microVMs).
-- Render **does not grant raw host filesystem or root access** (`/proc`, `/sys`, `/var/run/docker.sock`).
-- As a result, running `cAdvisor` or `node_exporter` on Render will **not** measure Render's physical host server or Docker daemon—it will only see the restricted microVM container sandbox.
-
----
-
-## 🛠️ How You CAN Use Render (Centralized Monitoring Hub)
-
-While exporters belong on your actual servers (EC2, DigitalOcean, Hetzner, or local host), you **can deploy Grafana and Prometheus on Render** to serve as your central cloud monitoring dashboard.
+## ⚡ Deployment Architecture on Render
 
 ```text
-[ Render Cloud Platform ]
-┌─────────────────────────┐        Scrapes Metrics        ┌─────────────────────────┐
-│ Render Web Service      │ ─────────────────────────────>│ External Host / EC2     │
-│ (Grafana UI)            │                               │ - Node Exporter (:9100) │
-├─────────────────────────┤        Queries GCP API        │ - cAdvisor (:8080)      │
-│ Render Private Service  │ ─────────────────────────────>├─────────────────────────┤
-│ (Prometheus Server)     │                               │ GCP Cloud Run Services  │
-└─────────────────────────┘                               └─────────────────────────┘
+                                [ RENDER CLOUD PLATFORM ]
+ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                       │
+ │   ┌──────────────────────────────┐              ┌─────────────────────────────────┐   │
+ │   │  Grafana Web Service         │              │  Prometheus Private Service     │   │
+ │   │  (Public Dashboard UI)       │ ────────────>│  (Internal Metrics Storage)     │   │
+ │   │  - Port 3000                 │ Internal Net │  - Port 9090                    │   │
+ │   │  - Persistent Disk (5 GB)    │              │  - Persistent Disk (10 GB)      │   │
+ │   └──────────────────────────────┘              └─────────────────────────────────┘   │
+ │                                                                 ▲                     │
+ └─────────────────────────────────────────────────────────────────┼─────────────────────┘
+                                                                   │
+                                             Scrapes External / Cloud Targets
+                                                                   │
+                         ┌─────────────────────────────────────────┴────────────────────────────────────────┐
+                         │                                                                                  │
+                         ▼                                                                                  ▼
+            ┌──────────────────────────┐                                                   ┌──────────────────────────┐
+            │ Production EC2 / VPS     │                                                   │ GCP Cloud Run            │
+            │ - Node Exporter (:9100)  │                                                   │ - Google Cloud           │
+            │ - cAdvisor (:8080)       │                                                   │   Monitoring Plugin      │
+            └──────────────────────────┘                                                   └──────────────────────────┘
 ```
 
 ---
 
-## 🚀 How to Deploy Grafana on Render
+## 🚀 Option 1: One-Click Deploy via Render Blueprint (`render.yaml`)
 
-### Step 1: Create a Render Web Service
-1. Log in to [Render Dashboard](https://dashboard.render.com).
-2. Click **New +** > **Web Service**.
-3. Connect your GitHub repository (`Prometheus-Grafana-Monitoring-Stack`).
-4. Select **Docker** environment.
+The repository includes a ready-to-deploy [`render.yaml`](../render.yaml) specification.
 
-### Step 2: Configure Environment & Persistent Storage
-- **Port**: `3000` (Grafana internal port).
-- **Persistent Disk** *(Crucial)*:
-  - Add a Render Disk mounted at `/var/lib/grafana` (Size: 1 GB - 5 GB).
-  - This ensures dashboards, users, and settings persist across Render deployments and restarts.
+### Step-by-Step Blueprint Deployment:
+1. Push this repository to GitHub (`OscarEdem/Prometheus-Grafana-Monitoring-Stack`).
+2. Log in to [Render Dashboard](https://dashboard.render.com).
+3. Click **New +** > **Blueprint**.
+4. Connect your GitHub repository `Prometheus-Grafana-Monitoring-Stack`.
+5. Render will automatically detect [`render.yaml`](../render.yaml) and provision:
+   - **`grafana-monitoring-ui`** (Public Web Service with 5 GB persistent disk mounted at `/var/lib/grafana`).
+   - **`prometheus-time-series-db`** (Private Service with 10 GB persistent disk mounted at `/prometheus`).
+6. Click **Apply**. Render will build and launch both services automatically!
 
 ---
 
-## 🚀 How to Deploy Prometheus on Render
+## 🛠️ Option 2: Manual Render Service Setup
 
-### Step 1: Create a Render Private Service
+If you prefer to configure services manually via the Render UI:
+
+### 1. Deploy Grafana (Web Service)
+1. In Render Dashboard, click **New +** > **Web Service**.
+2. Connect your GitHub repository.
+3. Configure settings:
+   - **Name**: `grafana-monitoring-ui`
+   - **Environment**: `Docker`
+   - **Dockerfile Path**: `./Dockerfile.grafana`
+   - **Instance Type**: Starter ($7/mo or Free tier for testing).
+4. Add **Environment Variables**:
+   - `PORT`: `3000`
+   - `GF_USERS_ALLOW_SIGN_UP`: `false`
+   - `GF_SECURITY_ADMIN_PASSWORD`: *(Set a strong password)*
+5. Add **Persistent Disk** *(Crucial for dashboard saving)*:
+   - Name: `grafana-storage`
+   - Mount Path: `/var/lib/grafana`
+   - Size: `5 GB`
+6. Click **Create Web Service**.
+
+---
+
+### 2. Deploy Prometheus (Private Service)
 1. In Render Dashboard, click **New +** > **Private Service**.
-2. Select your repository.
-3. Set Environment to **Docker**.
-
-### Step 2: Configure Persistent Storage & Secrets
-- **Command / Entrypoint**: Use Prometheus image `prom/prometheus:latest`.
-- **Persistent Disk**:
-  - Add a Render Disk mounted at `/prometheus` for time-series data storage.
-- **Scrape Configuration (`prometheus.yml`)**:
-  - Store your `prometheus.yml` in the repository or configure target endpoints pointing to external server public IPs or domain names over HTTPS.
+2. Connect your repository.
+3. Configure settings:
+   - **Name**: `prometheus-time-series-db`
+   - **Environment**: `Docker`
+   - **Dockerfile Path**: `./Dockerfile.prometheus`
+4. Add **Environment Variables**:
+   - `PORT`: `9090`
+5. Add **Persistent Disk**:
+   - Name: `prometheus-storage`
+   - Mount Path: `/prometheus`
+   - Size: `10 GB`
+6. Click **Create Private Service**.
 
 ---
 
-## 📊 Summary Comparison: Render vs VPS/EC2 Hosting
+## 🔗 Connecting Grafana to Prometheus on Render
 
-| Deployment Option | Prometheus + Grafana | node_exporter & cAdvisor | Ideal For |
-| :--- | :--- | :--- | :--- |
-| **Local Machine (Docker)** | ✅ Fully Supported | ✅ Fully Supported | Local development, testing & debugging. |
-| **Self-Hosted VPS / EC2** | ✅ Fully Supported | ✅ Fully Supported | Complete infrastructure & container monitoring stack. |
-| **Render Cloud Platform** | ✅ Supported as Central Hub | ❌ Not Supported (Sandbox restriction) | Centralized Grafana UI querying remote EC2 or GCP Cloud Run. |
+1. Open your Grafana public URL provided by Render (e.g., `https://grafana-monitoring-ui.onrender.com`).
+2. Log in using `admin` and the password set in `GF_SECURITY_ADMIN_PASSWORD`.
+3. Go to **Connections** > **Data Sources** > **Add Data Source** > **Prometheus**.
+4. Set the Server URL to the internal Render private service hostname:
+   `http://prometheus-time-series-db:9090`
+5. Click **Save & Test**.
+
+---
+
+## ⚠️ Important Note on `node_exporter` & `cAdvisor`
+
+Render runs applications inside isolated container microVM sandboxes and **does not expose raw host root access** (`/proc`, `/sys`, `/var/run/docker.sock`).
+
+- **Where to run exporters**: Keep `node_exporter` and `cAdvisor` running on your production server instances (e.g. AWS EC2, DigitalOcean, Hetzner, or local host).
+- **Prometheus Scrape Config**: In your [`prometheus.yml`](../prometheus.yml), set scrape targets pointing to the public IP/domain of your production servers:
+  ```yaml
+  scrape_configs:
+    - job_name: 'production-ec2'
+      static_configs:
+        - targets: ['your-ec2-ip:9100']
+  ```

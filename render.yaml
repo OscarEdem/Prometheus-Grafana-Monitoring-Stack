@@ -1,0 +1,35 @@
+# --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
+services:
+  # 1. Grafana Dashboard Web Service
+  - type: web
+    name: grafana-monitoring-ui
+    env: docker
+    dockerfilePath: ./Dockerfile.grafana
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: GF_SECURITY_ADMIN_PASSWORD
+        generateValue: true
+      - key: GF_USERS_ALLOW_SIGN_UP
+        value: "false"
+    disk:
+      name: grafana-storage
+      mountPath: /var/lib/grafana
+      sizeGB: 5
+
+  # 2. Prometheus Time-Series Database (Private Internal Service)
+  - type: pserv
+    name: prometheus-time-series-db
+    env: docker
+    dockerfilePath: ./Dockerfile.prometheus
+    plan: starter
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 9090
+    disk:
+      name: prometheus-storage
+      mountPath: /prometheus
+      sizeGB: 10
