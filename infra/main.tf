@@ -53,9 +53,9 @@ resource "google_compute_instance" "monitoring_vm" {
     exec > >(tee -a /var/log/monitoring-startup.log) 2>&1
     echo "[INFO] Starting Automated Monitoring Stack Deployment at $(date)..."
 
-    # 1. Update & install standard Ubuntu packages (docker.io, docker-compose, git)
+    # 1. Update & install standard Ubuntu packages (docker.io, docker-compose-plugin, git)
     apt-get update -y
-    apt-get install -y docker.io docker-compose git
+    apt-get install -y docker.io docker-compose-plugin git
 
     # 2. Start & enable Docker service
     systemctl daemon-reload
@@ -72,12 +72,9 @@ resource "google_compute_instance" "monitoring_vm" {
       git pull origin main
     fi
 
-    # 5. Spin up Docker containers
-    if command -v docker-compose &> /dev/null; then
-      docker-compose up -d
-    else
-      docker compose up -d
-    fi
+    # 5. Spin up Docker containers using modern Docker Compose v2
+    docker compose down --remove-orphans || true
+    docker compose up -d
 
     echo "[SUCCESS] Prometheus & Grafana Monitoring Stack is up and running at $(date)!"
   EOF

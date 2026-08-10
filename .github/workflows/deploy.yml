@@ -29,16 +29,17 @@ jobs:
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # 4. SSH into GCP VM and run container deployment
+      # 4. SSH into GCP VM and run container deployment using modern Docker Compose v2
       - name: Deploy Containers on GCP VM via gcloud SSH
         run: |
           gcloud compute ssh monitoring-stack-vm --zone=us-central1-a --project=${{ secrets.GCP_PROJECT_ID }} --command="
             sudo apt-get update -y && \
-            sudo apt-get install -y docker.io docker-compose git && \
+            sudo apt-get install -y docker.io docker-compose-plugin git && \
             sudo systemctl enable --now docker && \
             sudo mkdir -p /opt/monitoring && \
             sudo chown -R \$USER:\$USER /opt/monitoring && \
             cd /opt/monitoring && \
             if [ ! -d .git ]; then git clone https://github.com/OscarEdem/Prometheus-Grafana-Monitoring-Stack.git .; else git pull origin main; fi && \
-            sudo docker-compose up -d
+            sudo docker compose down --remove-orphans || true && \
+            sudo docker compose up -d
           "
