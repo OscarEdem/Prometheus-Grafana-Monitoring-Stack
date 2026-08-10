@@ -22,46 +22,21 @@ This stack provides real-time, low-overhead monitoring for server hardware healt
 ```text
 monitoring/
 ├── docker-compose.yml             # Main Docker Compose configuration
-├── docker-compose.monitoring.yml  # Duplicate setup for specific deployment scripts
+├── docker-compose.monitoring.yml  # Deployment configuration variant
 ├── prometheus.yml                 # Prometheus scrape configuration & jobs
 └── docs/                          # Stack documentation
-    ├── README.md                  # Stack overview & quickstart
+    ├── README.md                  # Stack overview
+    ├── local-testing.md           # Local setup, testing & dashboard import guide
     ├── capacity-and-multi-project.md # Scaling & multi-project monitoring guide
-    └── gcp-cloud-run-monitoring.md   # GCP Cloud Run integration guide
+    ├── gcp-cloud-run-monitoring.md   # GCP Cloud Run integration guide
+    └── render-deployment.md       # Render cloud hosting & container sandbox guide
 ```
-
----
-
-## 🚀 Quick Start
-
-### 1. Start the Stack
-Run the following command in the `monitoring/` directory:
-```bash
-docker compose up -d
-```
-
-### 2. Verify Services
-Check running containers:
-```bash
-docker compose ps
-```
-
-Access the dashboards:
-- **Grafana UI**: [http://localhost:3001](http://localhost:3001) (Default credentials: `admin` / `admin`)
-- **Prometheus Targets**: [http://localhost:9090/targets](http://localhost:9090/targets)
-- **Node Exporter Metrics**: [http://localhost:9100/metrics](http://localhost:9100/metrics)
-- **cAdvisor Metrics**: [http://localhost:8080/metrics](http://localhost:8080/metrics)
-
-### 3. Connect Prometheus Data Source in Grafana
-1. Open Grafana at `http://localhost:3001`.
-2. Navigate to **Connections** > **Data Sources** > **Add Data Source**.
-3. Select **Prometheus**.
-4. Set URL to `http://prometheus:9090` (internal Docker network name).
-5. Click **Save & Test**.
 
 ---
 
 ## 📖 Documentation Index
 
+- 🧪 [Local Testing & Execution Guide](./local-testing.md) - How to test locally and import pre-built Grafana dashboards (`1860` & `14282`).
 - 📘 [Capacity & Multi-Project Monitoring Guide](./capacity-and-multi-project.md) - Learn how many projects/containers can be monitored and how to filter them.
-- ☁️ [GCP Cloud Run Monitoring Guide](./gcp-cloud-run-monitoring.md) - Learn how to integrate GCP Cloud Run serverless services with Grafana.
+- ☁️ [GCP Cloud Run Monitoring Guide](./gcp-cloud-run-monitoring.md) - Learn how to integrate GCP Cloud Run serverless services with Grafana via GCP Service Accounts.
+- 🚀 [Render Cloud Deployment Guide](./render-deployment.md) - Deploying Prometheus & Grafana on Render vs container exporter sandbox limitations.
