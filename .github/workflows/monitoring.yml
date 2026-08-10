@@ -10,9 +10,9 @@ on:
       - main
 
 jobs:
-  # Job 1: Provision Infrastructure & Deploy Updates to VM
+  # Job 1: Provision Infrastructure & Build/Deploy Custom Docker Images
   terraform:
-    name: "Provision Infrastructure & Deploy Updates"
+    name: "Provision Infrastructure & Build/Deploy Containers"
     runs-on: ubuntu-latest
 
     defaults:
@@ -62,7 +62,7 @@ jobs:
           TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Deploy Updates Directly to Live VM
+      - name: Build Custom Docker Images & Deploy Directly to Live VM
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          gcloud compute ssh monitoring-stack-vm --zone=us-west1-b --command="cd /opt/monitoring && sudo git fetch --all && sudo git reset --hard origin/main && sudo docker-compose up -d" || true
+          gcloud compute ssh monitoring-stack-vm --zone=us-west1-b --command="cd /opt/monitoring && sudo git fetch --all && sudo git reset --hard origin/main && sudo docker-compose build && sudo docker-compose up -d" || true

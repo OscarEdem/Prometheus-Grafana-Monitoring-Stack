@@ -3,7 +3,10 @@ version: '3.8'
 
 services:
   prometheus:
-    image: prom/prometheus:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prometheus
+    image: custom-prometheus:latest
     container_name: local_prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
@@ -14,7 +17,10 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.grafana
+    image: custom-grafana:latest
     container_name: local_grafana
     ports:
       - "3001:3000"
