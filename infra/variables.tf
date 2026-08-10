@@ -13,7 +13,7 @@ variable "gcp_region" {
 variable "gcp_zone" {
   type        = string
   description = "GCP Zone for the VM instance."
-  default     = "us-central1-a"
+  default     = "us-central1-f" # Switched to us-central1-f for capacity availability
 }
 
 variable "repository_url" {
