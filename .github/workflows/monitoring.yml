@@ -43,7 +43,7 @@ jobs:
         env:
           TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          terraform import google_compute_instance.monitoring_vm projects/${{ secrets.GCP_PROJECT_ID }}/zones/us-central1-f/instances/monitoring-stack-vm || true
+          terraform import google_compute_instance.monitoring_vm projects/${{ secrets.GCP_PROJECT_ID }}/zones/us-west1-b/instances/monitoring-stack-vm || true
           terraform import google_compute_firewall.allow_grafana projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-grafana-monitoring || true
           terraform import google_compute_firewall.allow_prometheus projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-prometheus-monitoring || true
 

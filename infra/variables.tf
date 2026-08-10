@@ -6,14 +6,14 @@ variable "gcp_project_id" {
 
 variable "gcp_region" {
   type        = string
-  description = "GCP Region for the Always Free instance (e.g. us-central1, us-west1, us-east1)."
-  default     = "us-central1"
+  description = "GCP Region for the Always Free instance (e.g. us-west1, us-central1, us-east1)."
+  default     = "us-west1"
 }
 
 variable "gcp_zone" {
   type        = string
   description = "GCP Zone for the VM instance."
-  default     = "us-central1-f" # Switched to us-central1-f for capacity availability
+  default     = "us-west1-b" # Switched to Oregon us-west1-b for high capacity & Always Free ($0/mo) eligibility
 }
 
 variable "repository_url" {
