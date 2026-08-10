@@ -29,13 +29,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Authenticate with Google Cloud Platform
+      # 2. Authenticate to GCP
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 3. Setup Google Cloud SDK
+      # 3. Setup Cloud SDK
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
@@ -49,17 +49,26 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      # 6. Check Code Formatting
+      # 6. Import existing GCP resources if already created
+      - name: Import Existing GCP Resources
+        env:
+          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          terraform import google_compute_instance.monitoring_vm projects/${{ secrets.GCP_PROJECT_ID }}/zones/us-central1-a/instances/monitoring-stack-vm || true
+          terraform import google_compute_firewall.allow_grafana projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-grafana-monitoring || true
+          terraform import google_compute_firewall.allow_prometheus projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-prometheus-monitoring || true
+
+      # 7. Check Code Formatting
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 7. Generate Execution Plan
+      # 8. Generate Execution Plan
       - name: Terraform Plan
         env:
           TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
         run: terraform plan -no-color -out=tfplan
 
-      # 8. Apply Changes (Only on main branch push)
+      # 9. Apply Changes (Only on main branch push)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
