@@ -12,6 +12,8 @@ resource "google_compute_firewall" "allow_grafana" {
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["monitoring-stack"]
   description   = "Allow inbound HTTP access to Grafana UI on port 3001"
+
+  depends_on = [google_project_service.compute_api]
 }
 
 # Firewall rule for Prometheus Metrics UI (Port 9090)
@@ -27,4 +29,6 @@ resource "google_compute_firewall" "allow_prometheus" {
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["monitoring-stack"]
   description   = "Allow inbound HTTP access to Prometheus UI on port 9090"
+
+  depends_on = [google_project_service.compute_api]
 }

@@ -15,6 +15,13 @@ provider "google" {
   zone    = var.gcp_zone
 }
 
+# Automatically enable Compute Engine API if disabled
+resource "google_project_service" "compute_api" {
+  service                    = "compute.googleapis.com"
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
 # GCP Always Free Tier Compute Instance (e2-micro, 1GB RAM, 30GB Disk)
 resource "google_compute_instance" "monitoring_vm" {
   name         = "monitoring-stack-vm"
@@ -77,4 +84,6 @@ resource "google_compute_instance" "monitoring_vm" {
     automatic_restart   = true
     on_host_maintenance = "MIGRATE"
   }
+
+  depends_on = [google_project_service.compute_api]
 }
