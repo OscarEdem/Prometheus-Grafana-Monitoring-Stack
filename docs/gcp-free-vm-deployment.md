@@ -13,48 +13,39 @@ This guide explains how to host your entire Prometheus + Grafana monitoring stac
 | **Disk Storage** | **30 GB Persistent Disk ($0)** | Ephemeral (Resets on restart) |
 | **24/7 Continuous Uptime** | ✅ Never Sleeps | ⚠️ Sleeps after 15 mins inactivity |
 | **Docker Compose Support** | ✅ Full Native `docker compose` | ❌ No `docker compose` support |
-| **Host Metric Monitoring** | ✅ Full `node_exporter` + `cAdvisor` | ❌ No root/host access |
+| **Hardware Exporters** | ✅ Full `node_exporter` + `cAdvisor` | ❌ No root/host access |
 
 ---
 
-## 📋 GCP Always Free Instance Requirements
+## 🚀 Recommended: Automated Deployment via Terraform
 
-To qualify for Google Cloud's **$0.00/month Always Free Tier**, your Compute Engine VM must match these exact settings:
+The repository includes a ready-to-use [`infra/`](../infra/) folder containing complete Infrastructure-as-Code (IaC) Terraform scripts to automatically provision the GCP instance, firewall rules, and startup script.
+
+```bash
+# 1. Navigate to the terraform directory
+cd infra
+
+# 2. Copy and update your GCP Project ID in terraform.tfvars
+cp terraform.tfvars.example terraform.tfvars
+
+# 3. Provision the $0/mo server in 1 minute!
+terraform init
+terraform apply -auto-approve
+```
+
+---
+
+## 📋 Manual Deployment Alternative (GCP Always Free Instance)
+
+If you prefer to create the instance manually without Terraform:
 
 - **Machine Type**: `e2-micro` (2 vCPU, 1 GB RAM).
-- **Allowed Regions**:
-  - `us-west1` (Oregon)
-  - `us-central1` (Iowa)
-  - `us-east1` (South Carolina)
-- **Boot Disk**: Up to **30 GB Standard Persistent Disk** per month.
-- **Egress Bandwidth**: 1 GB free outbound data per month (to non-China/Australia destinations).
+- **Allowed Regions**: `us-central1` (Iowa), `us-west1` (Oregon), `us-east1` (South Carolina).
+- **Boot Disk**: Up to **30 GB Standard Persistent Disk**.
 
----
-
-## 🚀 Step-by-Step Deployment Guide
-
-### Step 1: Create the GCP Always Free Instance
-
-#### Option A: Via Google Cloud Console (GUI)
-1. Open [Google Cloud Console](https://console.cloud.google.com) > **Compute Engine** > **VM Instances**.
-2. Click **Create Instance**.
-3. Configure the VM:
-   - **Name**: `monitoring-stack`
-   - **Region**: Choose `us-central1` (Iowa), `us-west1` (Oregon), or `us-east1` (South Carolina).
-   - **Machine Series**: Select **E2**.
-   - **Machine Type**: Select **`e2-micro` (2 vCPU, 1 GB memory)**.
-4. **Boot Disk**:
-   - Click **Change**.
-   - Select OS: **Ubuntu 22.04 LTS** (or Debian 12).
-   - Disk Type: **Standard Persistent Disk**.
-   - Size: **`30 GB`**.
-   - Click **Select**.
-5. **Firewall**:
-   - Check **Allow HTTP traffic** and **Allow HTTPS traffic**.
-6. Click **Create**.
-
-#### Option B: Via `gcloud` CLI (Command Line)
+### Manual Command Line (`gcloud` CLI):
 ```bash
+# Create Instance
 gcloud compute instances create monitoring-stack \
     --zone=us-central1-a \
     --machine-type=e2-micro \
@@ -62,64 +53,18 @@ gcloud compute instances create monitoring-stack \
     --image-project=ubuntu-os-cloud \
     --boot-disk-size=30GB \
     --boot-disk-type=pd-standard \
-    --tags=http-server,https-server,monitoring-port
-```
+    --tags=http-server,https-server
 
----
-
-### Step 2: Open Grafana Port (3001) in GCP Firewall
-
-By default, GCP blocks incoming traffic on non-standard ports like `3001`. Create a firewall rule:
-
-```bash
+# Open Firewall Port 3001 (Grafana)
 gcloud compute firewall-rules create allow-grafana \
     --allow=tcp:3001 \
-    --target-tags=http-server \
-    --description="Allow incoming traffic to Grafana UI"
-```
+    --target-tags=http-server
 
----
-
-### Step 3: Install Docker & Spin Up Monitoring Stack
-
-1. SSH into your GCP VM instance (click **SSH** button in Cloud Console or run `gcloud compute ssh monitoring-stack`).
-2. Run the setup script:
-
-```bash
-# 1. Update system packages
-sudo apt update && sudo apt upgrade -y
-
-# 2. Install Docker & Docker Compose plugin
-sudo apt install -y docker.io docker-compose-v2 git
-
-# 3. Add current user to Docker group
-sudo usermod -aG docker $USER
-newgrp docker
-
-# 4. Clone your monitoring repository
+# SSH and Run Stack
+gcloud compute ssh monitoring-stack
+sudo apt update && sudo apt install -y docker.io docker-compose-v2 git
+sudo usermod -aG docker $USER && newgrp docker
 git clone https://github.com/OscarEdem/Prometheus-Grafana-Monitoring-Stack.git
 cd Prometheus-Grafana-Monitoring-Stack
-
-# 5. Start the full stack in background mode
 docker compose up -d
 ```
-
----
-
-### Step 4: Verify Deployment & Access Dashboards
-
-Run `docker compose ps` on the VM to verify all containers (`local_prometheus`, `local_grafana`, `local_node_exporter`, `local_cadvisor`) are active.
-
-Access your monitoring dashboards:
-- **Grafana Dashboard**: `http://YOUR_GCP_VM_EXTERNAL_IP:3001` *(Default login: `admin` / `admin`)*
-- **Prometheus Metrics**: `http://YOUR_GCP_VM_EXTERNAL_IP:9090`
-
----
-
-## 🎯 Summary
-
-By deploying on GCP's **`e2-micro` Always Free VM**, you get:
-- **$0.00 / month cost forever**.
-- **100% persistent data storage** (30 GB hard drive).
-- **24/7 continuous uptime** without sleeping.
-- Full container and hardware health monitoring for your entire infrastructure!

@@ -1,0 +1,9 @@
+# --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
+# Replace with your actual GCP Project ID
+gcp_project_id = "your-gcp-project-id"
+
+# Always Free Tier qualified region and zone
+gcp_region = "us-central1"
+gcp_zone   = "us-central1-a"
+
+repository_url = "https://github.com/OscarEdem/Prometheus-Grafana-Monitoring-Stack.git"
