@@ -50,34 +50,36 @@ resource "google_compute_instance" "monitoring_vm" {
   # Automated startup script to install Docker & launch monitoring stack on boot
   metadata_startup_script = <<-EOF
     #!/bin/bash
-    set -e
+    exec > >(tee -a /var/log/monitoring-startup.log) 2>&1
+    echo "[INFO] Starting Automated Monitoring Stack Deployment at $(date)..."
 
-    # Log output to startup script log file
-    exec > >(tee /var/log/monitoring-startup.log) 2>&1
-    echo "[INFO] Starting Automated Monitoring Stack Deployment..."
-
-    # Install Docker, Docker Compose plugin, and Git
+    # 1. Update & install standard Ubuntu packages (docker.io, docker-compose, git)
     apt-get update -y
-    apt-get install -y docker.io docker-compose-v2 git
+    apt-get install -y docker.io docker-compose git
 
-    # Enable and start Docker service
+    # 2. Start & enable Docker service
+    systemctl daemon-reload
     systemctl enable --now docker
 
-    # Prepare deployment directory
+    # 3. Create app directory
     mkdir -p /opt/monitoring
     cd /opt/monitoring
 
-    # Clone Monitoring Stack Repository
+    # 4. Clone Monitoring Stack Repository
     if [ ! -d "/opt/monitoring/.git" ]; then
       git clone ${var.repository_url} .
     else
       git pull origin main
     fi
 
-    # Launch Monitoring Stack via Docker Compose
-    docker compose up -d
+    # 5. Spin up Docker containers
+    if command -v docker-compose &> /dev/null; then
+      docker-compose up -d
+    else
+      docker compose up -d
+    fi
 
-    echo "[SUCCESS] Prometheus & Grafana Monitoring Stack is up and running!"
+    echo "[SUCCESS] Prometheus & Grafana Monitoring Stack is up and running at $(date)!"
   EOF
 
   scheduling {
