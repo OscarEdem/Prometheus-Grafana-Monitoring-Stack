@@ -32,3 +32,20 @@ resource "google_compute_firewall" "allow_prometheus" {
 
   depends_on = [google_project_service.compute_api]
 }
+
+# Firewall rule for SSH Access (Port 22)
+resource "google_compute_firewall" "allow_ssh" {
+  name    = "allow-ssh-monitoring"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["monitoring-stack"]
+  description   = "Allow inbound SSH access on port 22"
+
+  depends_on = [google_project_service.compute_api]
+}

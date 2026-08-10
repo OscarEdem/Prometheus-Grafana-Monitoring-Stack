@@ -46,6 +46,7 @@ jobs:
           terraform import google_compute_instance.monitoring_vm projects/${{ secrets.GCP_PROJECT_ID }}/zones/us-west1-b/instances/monitoring-stack-vm || true
           terraform import google_compute_firewall.allow_grafana projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-grafana-monitoring || true
           terraform import google_compute_firewall.allow_prometheus projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-prometheus-monitoring || true
+          terraform import google_compute_firewall.allow_ssh projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-ssh-monitoring || true
 
       - name: Terraform Format Check
         run: terraform fmt -check
