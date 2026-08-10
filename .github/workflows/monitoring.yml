@@ -1,23 +1,18 @@
 # --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
-name: "Terraform Infrastructure CI/CD"
+name: "Monitoring Stack CI/CD"
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'infra/**'
-      - '.github/workflows/terraform.yml'
   pull_request:
     branches:
       - main
-    paths:
-      - 'infra/**'
-      - '.github/workflows/terraform.yml'
 
 jobs:
+  # Job 1: Provision Infrastructure & Update VM
   terraform:
-    name: "Terraform Plan & Apply ($0/mo GCP VM)"
+    name: "Provision Infrastructure (Terraform)"
     runs-on: ubuntu-latest
 
     defaults:
@@ -25,31 +20,25 @@ jobs:
         working-directory: ./infra
 
     steps:
-      # 1. Checkout Repository
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Authenticate to GCP
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 3. Setup Cloud SDK
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # 4. Setup HashiCorp Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.7.0
 
-      # 5. Initialize Terraform
       - name: Terraform Init
         run: terraform init
 
-      # 6. Import existing GCP resources if already created
       - name: Import Existing GCP Resources
         env:
           TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -58,17 +47,14 @@ jobs:
           terraform import google_compute_firewall.allow_grafana projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-grafana-monitoring || true
           terraform import google_compute_firewall.allow_prometheus projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/allow-prometheus-monitoring || true
 
-      # 7. Check Code Formatting
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 8. Generate Execution Plan
       - name: Terraform Plan
         env:
           TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
         run: terraform plan -no-color -out=tfplan
 
-      # 9. Apply Changes (Only on main branch push)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
