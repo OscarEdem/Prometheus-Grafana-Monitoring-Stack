@@ -30,6 +30,8 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/json/infra-monitor.json
+      - GF_SERVER_ROOT_URL=http://${VM_PUBLIC_IP:-localhost}:3001
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     restart: unless-stopped
 
   node_exporter:

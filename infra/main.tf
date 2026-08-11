@@ -88,7 +88,16 @@ resource "google_compute_instance" "monitoring_vm" {
       git pull origin main
     fi
 
-    # 6. Clean stale containers & spin up fresh Docker containers
+    # 6. Fetch VM Public IP and update/write to .env for Grafana root URL
+    VM_PUBLIC_IP=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip)
+    if [ -f .env ]; then
+      sed -i '/^VM_PUBLIC_IP=/d' .env
+      echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" >> .env
+    else
+      echo "VM_PUBLIC_IP=$VM_PUBLIC_IP" > .env
+    fi
+
+    # 7. Clean stale containers & spin up fresh Docker containers
     docker compose down --remove-orphans || true
     docker compose up -d
 

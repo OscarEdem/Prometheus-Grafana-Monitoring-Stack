@@ -1,0 +1,72 @@
+# --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
+apiVersion: 1
+
+# List of contact points to import or update
+contactPoints:
+  - orgId: 1
+    name: "Discord Webhook (Slack Workaround)"
+    receivers:
+      - uid: discord-slack-receiver
+        type: slack
+        disableResolveMessage: false
+        settings:
+          url: "${DISCORD_WEBHOOK_URL}/slack"
+          title: '{{ template "discord.title" . }}'
+          text: '{{ template "discord.message" . }}'
+
+  - orgId: 1
+    name: "Discord Webhook (Native)"
+    receivers:
+      - uid: discord-native-receiver
+        type: discord
+        disableResolveMessage: false
+        settings:
+          url: "${DISCORD_WEBHOOK_URL}"
+          message: |
+            {{ template "discord.message" . }}
+
+# Global notification policy tree
+policies:
+  - orgId: 1
+    receiver: "Discord Webhook (Slack Workaround)"
+    group_by: ["alertname", "grafana_folder"]
+    group_wait: 10s
+    group_interval: 5m
+    repeat_interval: 4h
+
+# Notification templates
+templates:
+  - orgId: 1
+    name: "discord_templates"
+    template: |
+      {{ define "discord.title" }}
+      [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+      {{ end }}
+
+      {{ define "discord.message" }}
+      {{ if gt (len .Alerts.Firing) 0 }}
+      🔥 **Alerts Firing:**
+      {{ range .Alerts.Firing }}
+      • **Alert:** {{ .Labels.alertname }}
+      • **Severity:** `{{ .Labels.severity }}`
+      • **Summary:** {{ .Annotations.summary }}
+      • **Description:** {{ .Annotations.description }}
+      • **Started:** {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+      {{ if .SilenceURL }}• [Silence Alert]({{ .SilenceURL }}){{ end }}
+      {{ if .GeneratorURL }}• [Source Graph]({{ .GeneratorURL }}){{ end }}
+      ---
+      {{ end }}
+      {{ end }}
+
+      {{ if gt (len .Alerts.Resolved) 0 }}
+      ✅ **Alerts Resolved:**
+      {{ range .Alerts.Resolved }}
+      • **Alert:** {{ .Labels.alertname }}
+      • **Severity:** `{{ .Labels.severity }}`
+      • **Summary:** {{ .Annotations.summary }}
+      • **Description:** {{ .Annotations.description }}
+      • **Resolved At:** {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}
+      ---
+      {{ end }}
+      {{ end }}
+      {{ end }}
