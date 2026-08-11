@@ -66,4 +66,4 @@ jobs:
       - name: Build Custom Docker Images & Deploy Directly to Live VM
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          gcloud compute ssh monitoring-stack-vm --zone=us-west1-b --command="cd /opt/monitoring && sudo git fetch --all && sudo git reset --hard origin/main && sudo docker-compose build && sudo docker-compose up -d" || true
+          gcloud compute ssh monitoring-stack-vm --zone=us-west1-b --command="cd /opt/monitoring && sudo git fetch --all && sudo git reset --hard origin/main && sudo docker-compose build && sudo docker-compose up -d"
