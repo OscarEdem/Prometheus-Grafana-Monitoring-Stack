@@ -1,0 +1,15 @@
+# --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
+apiVersion: 1
+
+providers:
+  - name: 'monitoring-dashboards'
+    orgId: 1
+    folder: 'Monitoring'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false

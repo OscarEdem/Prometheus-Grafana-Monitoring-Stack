@@ -27,6 +27,8 @@ services:
     volumes:
       - grafana_storage:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/json/infra-monitor.json
     restart: unless-stopped
 
   node_exporter:
