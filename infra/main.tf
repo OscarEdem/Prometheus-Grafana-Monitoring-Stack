@@ -89,7 +89,7 @@ resource "google_compute_instance" "monitoring_vm" {
     fi
 
     # 6. Clean stale containers & spin up fresh Docker containers
-    docker-compose down -v --remove-orphans || true
+    docker-compose down --remove-orphans || true
     docker-compose up -d
 
     echo "[SUCCESS] Prometheus & Grafana Monitoring Stack is up and running at $(date)!"

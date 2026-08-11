@@ -10,6 +10,7 @@ services:
     container_name: local_prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
     extra_hosts:
@@ -58,7 +59,10 @@ services:
     container_name: local_loki
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+      - ./loki-config.yml:/etc/loki/loki-config.yaml
+    command: -config.file=/etc/loki/loki-config.yaml
     restart: unless-stopped
 
   promtail:
@@ -73,3 +77,5 @@ services:
 
 volumes:
   grafana_storage:
+  prometheus_data:
+  loki_data:
