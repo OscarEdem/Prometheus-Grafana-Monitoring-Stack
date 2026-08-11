@@ -71,7 +71,7 @@ resource "google_compute_instance" "monitoring_vm" {
 
     # 2. Update & install standard Ubuntu packages
     apt-get update -y
-    apt-get install -y docker.io docker-compose git
+    apt-get install -y docker.io docker-compose-v2 git
 
     # 3. Start & enable Docker service
     systemctl daemon-reload
@@ -89,8 +89,8 @@ resource "google_compute_instance" "monitoring_vm" {
     fi
 
     # 6. Clean stale containers & spin up fresh Docker containers
-    docker-compose down --remove-orphans || true
-    docker-compose up -d
+    docker compose down --remove-orphans || true
+    docker compose up -d
 
     echo "[SUCCESS] Prometheus & Grafana Monitoring Stack is up and running at $(date)!"
   EOF
