@@ -1,0 +1,64 @@
+# --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
+# Promtail Remote Agent — AfroVogue AWS Server
+# Ships logs to Loki on the GCP Monitoring VM (35.252.161.150)
+# -----------------------------------------------------------
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://35.252.161.150:3100/loki/api/v1/push
+
+scrape_configs:
+  # System logs (/var/log)
+  - job_name: afrovogue-system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system-logs
+          host: afrovogue-aws
+          __path__: /var/log/*log
+
+  # Docker container logs (JSON driver)
+  - job_name: afrovogue-docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker-logs
+          host: afrovogue-aws
+          __path__: /var/lib/docker/containers/*/*-json.log
+    pipeline_stages:
+      - json:
+          expressions:
+            log: log
+            stream: stream
+            time: time
+      - labels:
+          stream:
+      - output:
+          source: log
+      # Extract container name from the file path
+      - match:
+          selector: '{job="docker-logs"}'
+          stages:
+            - regex:
+                source: filename
+                expression: '/var/lib/docker/containers/(?P<container_id>[a-f0-9]+)/'
+            - labels:
+                container_id:
+
+  # Nginx access & error logs
+  - job_name: afrovogue-nginx
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-logs
+          host: afrovogue-aws
+          __path__: /var/log/nginx/*.log

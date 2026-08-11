@@ -1,0 +1,4 @@
+grafana_url = "http://35.252.161.150:3001"
+prometheus_url = "http://35.252.161.150:9090"
+vm_name = "monitoring-stack-vm"
+vm_public_ip = "35.252.161.150"

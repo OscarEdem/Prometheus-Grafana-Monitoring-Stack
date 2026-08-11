@@ -33,6 +33,23 @@ resource "google_compute_firewall" "allow_prometheus" {
   depends_on = [google_project_service.compute_api]
 }
 
+# Firewall rule for Loki Log Ingestion (Port 3100) — Locked to AfroVogue AWS server only                                                                                                          #*eddiere
+resource "google_compute_firewall" "allow_loki_push" {
+  name    = "allow-loki-push-monitoring"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["3100"]
+  }
+
+  source_ranges = ["16.192.111.188/32"]
+  target_tags   = ["monitoring-stack"]
+  description   = "Allow Promtail log push from AfroVogue AWS server to Loki on port 3100"
+
+  depends_on = [google_project_service.compute_api]
+}
+
 # Firewall rule for SSH Access (Port 22)
 resource "google_compute_firewall" "allow_ssh" {
   name    = "allow-ssh-monitoring"
