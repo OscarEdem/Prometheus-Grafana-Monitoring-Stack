@@ -24,15 +24,18 @@ scrape_configs:
           host: afrovogue-aws
           __path__: /var/log/*log
 
-  # Docker container logs (JSON driver)
   - job_name: afrovogue-docker
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: docker-logs
-          host: afrovogue-aws
-          __path__: /var/lib/docker/containers/*/*-json.log
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - replacement: afrovogue-aws
+        target_label: host
+      - replacement: docker-logs
+        target_label: job
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
     pipeline_stages:
       - json:
           expressions:
@@ -43,15 +46,6 @@ scrape_configs:
           stream:
       - output:
           source: log
-      # Extract container name from the file path
-      - match:
-          selector: '{job="docker-logs"}'
-          stages:
-            - regex:
-                source: filename
-                expression: '/var/lib/docker/containers/(?P<container_id>[a-f0-9]+)/'
-            - labels:
-                container_id:
 
   # Nginx access & error logs
   - job_name: afrovogue-nginx
