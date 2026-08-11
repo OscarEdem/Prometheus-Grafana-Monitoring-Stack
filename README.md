@@ -40,7 +40,6 @@ terraform apply -auto-approve
 ├── docker-compose.yml             # Main Docker Compose configuration
 ├── docker-compose.monitoring.yml  # Deployment configuration variant
 ├── prometheus.yml                 # Prometheus scrape configuration & jobs
-├── render.yaml                    # Render Cloud Blueprint specification ($0 free plan)
 ├── infra/                         # Terraform Infrastructure-as-Code directory
 │   ├── main.tf                    # GCP Compute Engine VM definition (e2-micro)
 │   ├── firewall.tf                # GCP Firewall rules (Ports 3001, 9090)
@@ -52,8 +51,7 @@ terraform apply -auto-approve
     ├── gcp-free-vm-deployment.md  # GCP Always Free VM ($0/mo) deployment guide
     ├── local-testing.md           # Local setup, testing & dashboard import guide
     ├── capacity-and-multi-project.md # Scaling & multi-project monitoring guide
-    ├── gcp-cloud-run-monitoring.md   # GCP Cloud Run integration guide
-    └── render-deployment.md       # Render cloud hosting & sandbox limitations guide
+    └── gcp-cloud-run-monitoring.md   # GCP Cloud Run integration guide
 ```
 
 ---
@@ -65,4 +63,3 @@ terraform apply -auto-approve
 - 🧪 [Local Testing & Execution Guide](./docs/local-testing.md) - How to test locally and import pre-built Grafana dashboards.
 - 📘 [Capacity & Multi-Project Guide](./docs/capacity-and-multi-project.md) - Scalability limits, container auto-discovery, and `/metrics` app scraping.
 - ☁️ [GCP Cloud Run Monitoring Guide](./docs/gcp-cloud-run-monitoring.md) - Step-by-step setup for Google Cloud Monitoring & Grafana.
-- 🚀 [Render Cloud Deployment Guide](./docs/render-deployment.md) - Hosting Prometheus & Grafana on Render vs container limitations.
