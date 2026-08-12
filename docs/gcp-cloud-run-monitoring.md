@@ -14,56 +14,74 @@ Follow these steps to connect GCP Cloud Run to Grafana.
 
 ---
 
-### Step 1: Create a GCP Service Account & Assign IAM Roles
+### Step 1: Grant IAM Permissions to Grafana
 
-To allow Grafana to fetch metrics from Google Cloud Monitoring, create a Service Account with read-only monitoring permissions.
+To allow Grafana to fetch metrics from Google Cloud Monitoring, you must grant it the **Monitoring Viewer** IAM role (`roles/monitoring.viewer`) for the target project.
 
-#### Option A: Using `gcloud` CLI (Recommended)
+#### Option A: GCE Default Service Account (Recommended - Zero Keys)
+If your Grafana instance runs on a GCP Compute Engine VM, it can securely use the VM's GCE metadata server credentials without any JSON key files:
 
-Run the following commands in your terminal or Google Cloud Shell:
+1. **Find the Monitoring VM's Service Account Email**:
+   By default, this is the Compute Engine Default Service Account (`PROJECT_NUMBER-compute@developer.gserviceaccount.com`).
+2. **Grant Monitoring Viewer Role in the Target Project**:
+   Run the following `gcloud` command to grant the monitoring service account access to read metrics from the target project:
+   ```bash
+   gcloud projects add-iam-policy-binding TARGET_GCP_PROJECT_ID \
+       --member="serviceAccount:MONITORING_VM_SA_EMAIL" \
+       --role="roles/monitoring.viewer"
+   ```
 
-```bash
-# 1. Set your target Google Cloud Project ID
-gcloud config set project YOUR_GCP_PROJECT_ID
+#### Option B: Dedicated Service Account JSON Key (For Local/External Hosting)
+If you run Grafana locally or outside of GCP, you must use a dedicated JSON private key:
 
-# 2. Create a dedicated Service Account for Grafana
-gcloud iam service-accounts create grafana-cloud-monitoring-reader \
-    --display-name="Grafana Cloud Monitoring Reader"
-
-# 3. Assign the 'Monitoring Viewer' IAM role
-gcloud projects add-iam-policy-binding YOUR_GCP_PROJECT_ID \
-    --member="serviceAccount:grafana-cloud-monitoring-reader@YOUR_GCP_PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/monitoring.viewer"
-
-# 4. Generate and download the JSON service account key
-gcloud iam service-accounts keys create ~/grafana-gcp-key.json \
-    --iam-account=grafana-cloud-monitoring-reader@YOUR_GCP_PROJECT_ID.iam.gserviceaccount.com
-```
-
-#### Option B: Using Google Cloud Console (GUI)
-
-1. Open **Google Cloud Console** > **IAM & Admin** > **Service Accounts**.
-2. Click **+ Create Service Account**.
-3. Set Name: `grafana-cloud-monitoring-reader` and click **Create and Continue**.
-4. In **Grant this service account access to project**, select Role: **Monitoring** > **Monitoring Viewer** (`roles/monitoring.viewer`).
-5. Click **Done**.
-6. Select your new Service Account > **Keys** tab > **Add Key** > **Create new key**.
-7. Choose **JSON** format and save `grafana-gcp-key.json` to your local machine.
+1. **Create Service Account**:
+   ```bash
+   gcloud iam service-accounts create grafana-cloud-monitoring-reader \
+       --display-name="Grafana Cloud Monitoring Reader" \
+       --project=TARGET_GCP_PROJECT_ID
+   ```
+2. **Assign the Monitoring Viewer IAM Role**:
+   ```bash
+   gcloud projects add-iam-policy-binding TARGET_GCP_PROJECT_ID \
+       --member="serviceAccount:grafana-cloud-monitoring-reader@TARGET_GCP_PROJECT_ID.iam.gserviceaccount.com" \
+       --role="roles/monitoring.viewer"
+   ```
+3. **Generate and Download JSON Key**:
+   ```bash
+   gcloud iam service-accounts keys create ~/grafana-gcp-key.json \
+       --iam-account=grafana-cloud-monitoring-reader@TARGET_GCP_PROJECT_ID.iam.gserviceaccount.com
+   ```
 
 ---
 
-### Step 2: Add Google Cloud Monitoring Data Source in Grafana
+### Step 2: Configure the Google Cloud Monitoring Data Source in Grafana
 
+Grafana can be configured either via the UI or automatically provisioned on startup.
+
+#### Method A: Automated Provisioning (Recommended)
+Add the data source directly to your `grafana/provisioning/datasources/datasources.yml` configuration:
+
+```yaml
+# --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
+  - name: Google Cloud Monitoring (CyberAwareness)
+    type: stackdriver
+    access: proxy
+    jsonData:
+      authenticationType: gce
+      defaultProject: TARGET_GCP_PROJECT_ID
+    editable: true
+```
+
+#### Method B: Manual Configuration via Grafana UI
 1. Open Grafana in your browser at [http://localhost:3001](http://localhost:3001).
 2. Log in (Default credentials: `admin` / `admin`).
-3. In the left navigation bar, go to **Connections** > **Data Sources**.
-4. Click **+ Add data source** and search for **Google Cloud Monitoring**.
-5. Configure the Data Source settings:
-   - **Authentication Type**: Select `Service Account Key`.
-   - **Service Account Key**: Open your downloaded `grafana-gcp-key.json` file, copy its entire JSON content, and paste it into the field.
-   - **Default Project**: Select your GCP Project ID.
-6. Click **Save & test**.
-7. You should see a green notification: *"Successfully queried the Google Cloud Monitoring API."*
+3. Navigate to **Connections** > **Data Sources** > **+ Add data source** and search for **Google Cloud Monitoring**.
+4. Configure the Data Source settings:
+   * **Authentication Type**:
+     * For **Option A (Zero-Keys)**: Select `GCE Default Service Account`.
+     * For **Option B (JSON Key)**: Select `Service Account Key` and paste the contents of `grafana-gcp-key.json`.
+   * **Default Project**: Input your target GCP Project ID (e.g., `greencandlecyberawareness`).
+5. Click **Save & test**. You should see a green notification: *"Successfully queried the Google Cloud Monitoring API."*
 
 ---
 
@@ -123,3 +141,30 @@ If you require custom application metrics or enterprise-wide metrics collection,
 
 ### Option 3: Google Cloud Managed Service for Prometheus (GMP)
 - Fully-managed Prometheus agent ingestion native to Google Cloud, queried directly via Grafana using standard PromQL.
+
+---
+
+## 🖥️ Monitoring Private Database VMs (Google Cloud Ops Agent)
+
+For Compute Engine VMs that do not have public IPs (such as `cyberawareness-prod-db-vm` running Postgres), you cannot scrape them directly using the central Prometheus stack. Instead, you can install the **Google Cloud Ops Agent** to push system metrics directly to Google Cloud Monitoring.
+
+### 1. Installation
+The Ops Agent can be installed automatically via the VM's startup script:
+```bash
+# Install Google Cloud Ops Agent
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+bash add-google-cloud-ops-agent-repo.sh --also-install
+```
+
+### 2. Verify Agent Status
+SSH into your DB VM and verify the agent is running:
+```bash
+sudo systemctl status google-cloud-ops-agent"*"
+```
+
+### 3. Visualizing VM Metrics in Grafana
+Once the Ops Agent starts pushing metrics, they will appear in Google Cloud Monitoring under the `compute.googleapis.com` metric namespace. You can query these metrics in Grafana using the same **Google Cloud Monitoring** data source:
+* **CPU Utilization**: `compute.googleapis.com/instance/cpu/utilization`
+* **Memory Utilization**: `compute.googleapis.com/instance/memory/percent_used`
+* **Disk Write Operations**: `compute.googleapis.com/instance/disk/write_bytes_count`
+

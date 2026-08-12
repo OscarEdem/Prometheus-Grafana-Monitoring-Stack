@@ -1,5 +1,4 @@
 # --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
-version: '3.8'
 
 services:
   prometheus:
@@ -54,27 +53,27 @@ services:
         max-size: "10m"
         max-file: "3"
 
-#   node_exporter:
-#     image: prom/node-exporter:latest
-#     container_name: local_node_exporter
-#     ports:
-#       - "9100:9100"
-#     restart: unless-stopped
-# 
-#   cadvisor:
-#     image: ghcr.io/google/cadvisor:0.54.0
-#     container_name: local_cadvisor
-#     command:
-#       - --docker_only=true
-#       - --housekeeping_interval=15s
-#     ports:
-#       - "8080:8080"
-#     volumes:
-#       - /:/rootfs:ro,rslave
-#       - /var/run:/var/run:ro
-#       - /sys:/sys:ro
-#       - /var/lib/docker/:/var/lib/docker:ro,rslave
-#     restart: unless-stopped
+  #   node_exporter:
+  #     image: prom/node-exporter:latest
+  #     container_name: local_node_exporter
+  #     ports:
+  #       - "9100:9100"
+  #     restart: unless-stopped
+  #
+  #   cadvisor:
+  #     image: ghcr.io/google/cadvisor:0.54.0
+  #     container_name: local_cadvisor
+  #     command:
+  #       - --docker_only=true
+  #       - --housekeeping_interval=15s
+  #     ports:
+  #       - "8080:8080"
+  #     volumes:
+  #       - /:/rootfs:ro,rslave
+  #       - /var/run:/var/run:ro
+  #       - /sys:/sys:ro
+  #       - /var/lib/docker/:/var/lib/docker:ro,rslave
+  #     restart: unless-stopped
 
   loki:
     image: grafana/loki:2.9.8

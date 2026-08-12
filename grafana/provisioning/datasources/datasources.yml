@@ -14,3 +14,12 @@ datasources:
     access: proxy
     url: http://loki:3100
     editable: true
+
+  - name: Google Cloud Monitoring (CyberAwareness)
+    type: stackdriver
+    access: proxy
+    jsonData:
+      authenticationType: gce
+      defaultProject: greencandlecyberawareness
+    editable: true
+
