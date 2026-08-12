@@ -24,9 +24,9 @@ resource "google_project_service" "compute_api" {
 
 # Reserve a static external IP address for the monitoring VM
 resource "google_compute_address" "static_ip" {
-  name         = "monitoring-vm-static-ip"
-  region       = var.gcp_region
-  depends_on   = [google_project_service.compute_api]
+  name       = "monitoring-vm-static-ip"
+  region     = var.gcp_region
+  depends_on = [google_project_service.compute_api]
 }
 
 # GCP Always Free Tier Compute Instance (e2-micro, 1GB RAM, 30GB Disk)
