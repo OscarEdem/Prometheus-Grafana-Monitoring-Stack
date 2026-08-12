@@ -22,6 +22,13 @@ resource "google_project_service" "compute_api" {
   disable_on_destroy         = false
 }
 
+# Reserve a static external IP address for the monitoring VM
+resource "google_compute_address" "static_ip" {
+  name         = "monitoring-vm-static-ip"
+  region       = var.gcp_region
+  depends_on   = [google_project_service.compute_api]
+}
+
 # GCP Always Free Tier Compute Instance (e2-micro, 1GB RAM, 30GB Disk)
 resource "google_compute_instance" "monitoring_vm" {
   name         = "monitoring-stack-vm"
@@ -41,9 +48,9 @@ resource "google_compute_instance" "monitoring_vm" {
   network_interface {
     network = "default"
 
-    # Allocate a public external IP address
+    # Allocate the reserved static external IP address
     access_config {
-      // Ephemeral public IP
+      nat_ip = google_compute_address.static_ip.address
     }
   }
 
