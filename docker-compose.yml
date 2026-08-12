@@ -16,6 +16,16 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 150M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   grafana:
     build:
@@ -33,6 +43,16 @@ services:
       - GF_SERVER_ROOT_URL=http://${VM_PUBLIC_IP:-localhost}:3001
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.40'
+          memory: 200M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 #   node_exporter:
 #     image: prom/node-exporter:latest
@@ -66,6 +86,16 @@ services:
       - ./loki-config.yml:/etc/loki/loki-config.yaml
     command: -config.file=/etc/loki/loki-config.yaml
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 150M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   promtail:
     image: grafana/promtail:2.9.8
@@ -73,9 +103,18 @@ services:
     volumes:
       - ./promtail-config.yml:/etc/promtail/config.yml
       - /var/log:/var/log:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/config.yml
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.15'
+          memory: 80M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   grafana_storage:
