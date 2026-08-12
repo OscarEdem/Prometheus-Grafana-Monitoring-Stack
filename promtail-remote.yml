@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                #*eddiere
 # Promtail Remote Agent — AfroVogue AWS Server
-# Ships logs to Loki on the GCP Monitoring VM (35.252.161.150)
+# Ships logs to Loki on the GCP Monitoring VM (8.231.152.191)
 # -----------------------------------------------------------
 
 server:
@@ -11,7 +11,7 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://35.252.161.150:3100/loki/api/v1/push
+  - url: http://8.231.152.191:3100/loki/api/v1/push
 
 scrape_configs:
   # System logs (/var/log)
