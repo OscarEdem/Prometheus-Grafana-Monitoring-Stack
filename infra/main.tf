@@ -35,6 +35,8 @@ resource "google_compute_instance" "monitoring_vm" {
   machine_type = "e2-micro" # Qualifies for GCP Always Free Tier ($0/mo)
   zone         = var.gcp_zone
 
+  allow_stopping_for_update = true
+
   tags = ["monitoring-stack", "http-server", "https-server"]
 
   boot_disk {
